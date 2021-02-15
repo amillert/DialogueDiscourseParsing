@@ -5,9 +5,11 @@ dialogues = []
 
 def process_file(id, filename_prefix):
     print(filename_prefix)
-    
-    f_annotation = open("%s.aa" % filename_prefix)
-    annotations = xmltodict.parse(''.join(f_annotation.readlines()))["annotations"]
+
+    fname = "%s.aa" % filename_prefix
+    with open(fname, "r") as f_annotation:
+        annotations = xmltodict.parse(''.join(f_annotation.readlines()))["annotations"]
+
     units = annotations["unit"]
     if not 'relation' in annotations:
         relations = []
@@ -19,9 +21,9 @@ def process_file(id, filename_prefix):
     discourse = f_discourse.readline()
     for i in range(len(discourse)):
         if ord(discourse[i]) >= 128: discourse = discourse[:i] + " " + discourse[i+1:]
-    
+
     edus, buf_dialogues = {}, {}
-    
+
     for item in units:
         _id = item["@id"]
         start = int(item["positioning"]["start"]["singlePosition"]["@index"])
@@ -58,13 +60,13 @@ def process_file(id, filename_prefix):
                 break
         if not found:
             raise Warning("Dialogue not found")
-    
+
     if type(schema) != list: schema = [schema] 
     for item in schema:
         _id = item["@id"]
         _type = item["characterisation"]["type"]
         if item["positioning"] == None: continue
-        
+
         cdu = []
         if "embedded-unit" in item["positioning"]:
             if type(item["positioning"]["embedded-unit"]) == list:
@@ -81,7 +83,7 @@ def process_file(id, filename_prefix):
                 cdu += [item["positioning"]["embedded-schema"]["@id"]]
         belong_to[_id] = belong_to[cdu[0]]
         buf_dialogues[belong_to[_id]]["cdus"][_id] = cdu
-        
+
     if type(relations) != list: relations = [relations]
     for item in relations:
         _id = item["@id"]
@@ -93,30 +95,31 @@ def process_file(id, filename_prefix):
             "x": x,
             "y": y
         })
-        
+
     for _id in buf_dialogues:
         buf_dialogues[_id]["id"] = id
         dialogues.append(buf_dialogues[_id])
-        
+
+
 def process_dialogue(dialogue):
     has_incoming = {}
-    
+
     for relation in dialogue["relations"]:
         has_incoming[relation["y"]] = True
-       
+
     for _id in dialogue["edus"]:
         edu = dialogue["edus"][_id]
         if edu["type"] == "paragraph": continue
-        
+
         for _id_para in dialogue["edus"]:
             def parse_speaker(text):
                 return (text.split())[2]
-            
+
             para = dialogue["edus"][_id_para]
             if para["type"] != "paragraph": continue
             if para["start"] <= edu["start"] and para["end"] >= edu["end"]:
                 edu["speaker"] = parse_speaker(para["text"])
-    
+
     idx = {}
     dialogue["edu_list"] = []
     for _id in dialogue["edus"]:
@@ -126,10 +129,10 @@ def process_dialogue(dialogue):
     for i in range(len(dialogue["edu_list"])):
         edu = dialogue["edu_list"][i]
         idx[edu["id"]] = i
-        
+
     for i, edu in enumerate(dialogue["edu_list"]):
         print(i, edu["speaker"], ":", edu["text"])
-       
+
     print("===")
 
     for relation in dialogue["relations"]:
@@ -139,16 +142,16 @@ def process_dialogue(dialogue):
                 for du in dialogue["cdus"][x]:
                     if not du in has_incoming: return get_head(du)
                 raise Warning("Can't find the recursive head")
-            
+
         relation["x"] = idx[get_head(relation["x"])]
         relation["y"] = idx[get_head(relation["y"])]
-        
+
     dialogue_cleaned = {
         "id": dialogue["id"],
         "edus": [],
         "relations": []
     }
-    
+
     for edu in dialogue["edu_list"]:
         dialogue_cleaned["edus"].append({
             "speaker": edu["speaker"],
@@ -160,20 +163,22 @@ def process_dialogue(dialogue):
             "x": relation["x"],
             "y": relation["y"]
         })
-        
+
     return dialogue_cleaned
-      
+
 input_dir = sys.argv[1]
 output_file = sys.argv[2]
-      
+
 dirs = os.listdir(input_dir)
 for directory in dirs:
-    path = os.path.join(os.path.join(input_dir, directory), "discourse/GOLD")
-    if os.path.exists(path):
-        for filename in os.listdir(path):
+    path = os.path.join(os.path.join(input_dir, directory), "../../discourse/GOLD")
+    abspath = os.path.abspath(path)
+
+    if os.path.exists(abspath):
+        for filename in os.listdir(abspath):
             if re.match("\S*.ac", filename):
                 id = filename[:filename.find('_')]
-                process_file(id, os.path.join(path, filename[:filename.index(".")]))
+                process_file(id, os.path.join(abspath, filename[:filename.index(".")]))
 
 dialogues_cleaned = []
 retained = []
