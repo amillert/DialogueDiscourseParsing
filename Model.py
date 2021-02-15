@@ -22,7 +22,7 @@ class Model():
             float(FLAGS.learning_rate), trainable=False, dtype=tf.float32)                                   
         self.learning_rate_decay_op = self.learning_rate.assign(
             self.learning_rate * FLAGS.learning_rate_decay)
-                
+
         self.agent_bi = Agent(sess, FLAGS, embed, scope="agent_bi", is_multi=False)
         self.agent_multi = Agent(sess, FLAGS, embed, scope="agent_multi", is_multi=True)
 
@@ -43,11 +43,11 @@ class Model():
             for param in self.params_all
         ]
         self.grad_clipped = tf.clip_by_global_norm(self.grad_unclipped, 5.0)
-        
+
     def initialize(self, vocab):
         self.agent_bi.ns_encoder.initialize(vocab)
         self.agent_multi.ns_encoder.initialize(vocab)
-            
+
     def sample_action(self, policy):
         action = []
         for p in policy:
@@ -577,7 +577,7 @@ class Model():
                 
             action = self.sample_action(policy)
             if not action:
-                print policy
+                print(policy)
                 raise Warning("Action not found, policy:")
                 
             # update prec/recall statistics
@@ -737,8 +737,8 @@ class Model():
             
         if is_train:
             if math.isnan(sum_loss_bi) or math.isnan(sum_loss_multi):
-                print "sum_loss_bi", sum_loss_bi
-                print "sum_loss_multi", sum_loss_multi
+                print("sum_loss_bi", sum_loss_bi)
+                print("sum_loss_multi", sum_loss_multi)
                 raise Warning("NaN appears!")
         
         for dialog in batch:

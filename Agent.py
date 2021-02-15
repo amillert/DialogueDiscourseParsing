@@ -144,9 +144,9 @@ class Agent():
         
     def _build_encoders(self, FLAGS, embed):
         num_units = self.num_units
-                    
+
         self.ns_encoder = NonStructured_Encoder(self.sess, FLAGS, embed, num_units=num_units)
-        
+
         if self.use_structured:
             self.s_encoder_general = Structured_Encoder(self.sess, FLAGS, scope="Structured_Encoder_general")
             if self.use_speaker_attn:
@@ -155,7 +155,7 @@ class Agent():
                 self.s_encoder_attn = self.s_encoder_general
         else:
             self.s_encoder_general, self.s_encoder_attn = None, None
-        
+
     def softmax_with_mask(self, h, mask):
         exp_with_mask = tf.exp(h * mask) * mask
         s = tf.reduce_sum(exp_with_mask, axis=-1)
