@@ -15,7 +15,7 @@ Zhouxing Shi and Minlie Huang. A Deep Sequential Model for Discourse Parsing on 
 
 ## Requirements
 
-* Python 2.7
+* Python 3.6 (updated)
 * Tensorflow 1.3
 
 ## Data Format
