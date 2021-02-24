@@ -5,4 +5,7 @@ log*
 *.pyc
 data
 glove
-
+.idea/
+.vim/
+build/
+outputs/
