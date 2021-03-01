@@ -10,14 +10,14 @@ import numpy as np
 
 
 # TODO: fix cuda
-# if not os.environ.has_key('CUDA_VISIBLE_DEVICES'):
-#     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+if not os.environ.__dict__.get("CUDA_VISIBLE_DEVICES"):
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 FLAGS = tf.flags.FLAGS
 
 tf.flags.DEFINE_boolean('train', False, 'train model')
 tf.flags.DEFINE_integer('display_interval', 500, 'step interval to display information')
 tf.flags.DEFINE_boolean('show_predictions', False, 'show predictions in the test stage')
-# tf.flags.DEFINE_string('word_vector', 'glove/glove.6B.100d.txt', 'word vector')
 tf.flags.DEFINE_string('word_vector', 'data/glove/glove.6B.100d.txt', 'word vector')
 tf.flags.DEFINE_string('prefix', 'dev', 'prefix for storing model and log')
 tf.flags.DEFINE_integer('vocab_size', 1000, 'vocabulary size')
@@ -29,7 +29,7 @@ tf.flags.DEFINE_boolean('use_structured', True, 'use structured encoder')
 tf.flags.DEFINE_boolean('use_speaker_attn', True, 'use speaker highlighting mechanism')
 tf.flags.DEFINE_boolean('use_shared_encoders', False, 'use shared encoders')
 tf.flags.DEFINE_boolean('use_random_structured', False, 'use random structured repr.')
-tf.flags.DEFINE_integer('num_epochs', 50, 'number of epochs')
+tf.flags.DEFINE_integer('num_epochs', 5, 'number of epochs')
 tf.flags.DEFINE_integer('num_units', 256, 'number of hidden units')
 tf.flags.DEFINE_integer('num_layers', 1, 'number of RNN layers in encoders')
 tf.flags.DEFINE_integer('num_relations', 16, 'number of relation types')
@@ -49,10 +49,8 @@ def get_summary_sum(s, length):
 
 
 map_relations = {}
-# data_train = load_data('data/STAC/train.json', map_relations)
-data_train = load_data('outputs/res.json', map_relations)
-data_test = load_data('outputs/res.json', map_relations)
-# data_test = load_data('data/STAC/test.json', map_relations)
+data_train = load_data('outputs/res3.json', map_relations)
+data_test = load_data('outputs/res3.json', map_relations)
 vocab, embed = build_vocab(data_train)
 
 print('Dataset sizes: %d/%d' % (len(data_train), len(data_test)))
@@ -60,13 +58,12 @@ print('Dataset sizes: %d/%d' % (len(data_train), len(data_test)))
 model_dir, log_dir = FLAGS.prefix + '_model', FLAGS.prefix + '_log'
 
 config = tf.ConfigProto()
-# config.gpu_options.allow_growth = True
-config.gpu_options.allow_growth = False
+config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
 if __name__ == '__main__':
     with sess.as_default():
-        model = Model(sess, FLAGS, embed, data_train)
+        model = Model(sess, FLAGS, embed)  # , data_train)
 
         global_step = tf.Variable(0, name='global_step', trainable=False)
         global_step_inc_op = global_step.assign(global_step + 1)
@@ -79,6 +76,7 @@ if __name__ == '__main__':
         summary_num = len(summary_list)
         len_output_feed = 6
 
+        # remove dev_model's contents manually to perform training again
         if FLAGS.train:
             if tf.train.get_checkpoint_state(model_dir):
                 print('Reading model parameters from %s' % model_dir)
@@ -128,7 +126,6 @@ if __name__ == '__main__':
                             print('  train %s: %.5lf' % (summary_list[k], summary_sum[k]))
                         print('  best test f1:', best_test_f1[0], best_test_f1[1])
 
-                exit(20)
                 summary_sum = get_summary_sum(s, len(train_batches))
                 summaries = sess.run(summary_op, feed_dict=dict(zip(summary_placeholders, summary_sum)))
                 for s in summaries:
@@ -182,5 +179,3 @@ if __name__ == '__main__':
             print('Test:')
             for k in range(summary_num):
                 print('  test %s: %.5lf' % (summary_list[k], summary_sum[k]))
-
-
