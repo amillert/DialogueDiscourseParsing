@@ -31,7 +31,6 @@ def merge_dialogues(schema, edus, belong_to, buf_dialogues):
     return schema, edus, belong_to, buf_dialogues
 
 
-
 def find_belonging(edus, buf_dialogues):
     belong_to = {}
     for id_edu, edu in edus.items():
@@ -47,6 +46,82 @@ def find_belonging(edus, buf_dialogues):
             raise Warning("Dialogue not found")
 
     return belong_to
+
+
+def handle_response(resp):
+    opening = resp.find("(")
+    return resp[opening + 1:-1] if opening != -1 else resp
+
+
+def annotate_utterance(line):
+    tmp = line.split("\t")
+    if len(tmp) == 4:
+        return tmp[0], tmp[1], tmp[2], normalize(handle_response(tmp[3]))
+
+
+def normalize(text):
+    # TODO(albert): sth messed up w/ this. different results from previous approach
+    # removing characters which ascii code is above 128
+    # i'd say it's a bad approach... changing discourse size while iterating through it?
+    # for i in range(len(discourse)):
+    #     if ord(discourse[i]) >= 128: discourse = discourse[:i] + " " + discourse[i+1:]
+    # still not sure if they didn't want to remove 127 as well
+    return ''.join([" " if ord(x) >= 128 else x for x in text]).strip()
+
+
+def reformat(dics, identifier):
+    global_start = min([float(x["start"]) for x in dics])
+    global_end = max([float(x["stop"]) for x in dics])
+    res = {
+        "id": identifier,
+        "start": global_start,
+        "end": global_end,
+        "edus": {},
+        "cdus": {},
+        "relations": []
+    }
+
+    for ix, dic in enumerate(dics):
+        id = f"DAIC-{identifier}-{ix}"
+        res["edus"][id] = {
+            "id": id,
+            "type": "paragraph",
+            "speaker": dic['speaker'],
+            "text": f" : {dic['speaker']} : {dic['value']}",
+            "start": dic["start"],
+            "end": dic["stop"]
+        }
+        if ix + 1 == len(dics):
+            break
+        elif dic["speaker"] == dics[ix + 1]["speaker"]:
+            res["relations"].append({"type": "Continuation", "x": ix, "y": ix + 1})
+        elif dic["speaker"] != dics[ix + 1]["speaker"] and "?" in dic["value"]:
+            res["relations"].append({"type": "QA-pair", "x": ix, "y": ix + 1})
+        elif dic["speaker"] != dics[ix + 1]["speaker"]:
+            res["relations"].append({"type": "wymiana zdań", "x": ix, "y": ix + 1})
+        else:
+            res["relations"].append({"type": "not assigned", "x": ix, "y": ix + 1})
+
+    # TODO(albert): there are originally also relations (18), and cdus (3);
+    #               whereas edus - 36
+    #               relations is like type (question-answer, acknowledgment, etc. and then x, y pairs of ids)
+
+    return res
+
+
+def process_file2(identifier, filename_prefix):
+    keys = ["start", "stop", "speaker", "value"]
+    dics = []
+    with open(filename_prefix, "r") as f_annotation:
+        annotations = f_annotation.readlines()
+        for line in annotations[1:]:
+            res = annotate_utterance(line.strip())
+            if res:
+                dics.append(dict(zip(keys, res)))
+
+    reformatted = reformat(dics, identifier)
+
+    return reformatted
 
 
 def process_file(identifier, filename_prefix):
@@ -66,12 +141,7 @@ def process_file(identifier, filename_prefix):
     with open(f"{filename_prefix}.ac", "r") as f_discourse:
         discourse: str = f_discourse.readline()  # one-liner - so res in str not list
 
-    # removing characters which ascii code is above 128
-    # i'd say it's a bad approach... changing discourse size while iterating through it?
-    # for i in range(len(discourse)):
-    #     if ord(discourse[i]) >= 128: discourse = discourse[:i] + " " + discourse[i+1:]
-    discourse = ''.join([x for x in discourse if ord(x) < 128])
-    # still not sure if they didn't want to remove 127 as well
+    discourse = normalize(discourse)
 
     exclude_types = ["Turn", "NonplayerTurn"]
 
@@ -111,4 +181,3 @@ def process_file(identifier, filename_prefix):
     for _id in buf_dialogues:
         buf_dialogues[_id]["id"] = identifier
         yield buf_dialogues[_id]
-

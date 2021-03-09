@@ -29,11 +29,12 @@ def clean_dialogues(dialogue):
     return dialogue_cleaned
 
 
-def process_dialogue(dialogue):
+def process_dialogue(dialogue, DAIC=None):
     has_incoming = {}
 
-    for relation in dialogue["relations"]:
-        has_incoming[relation["y"]] = True
+    if dialogue["relations"]:
+        for relation in dialogue["relations"]:
+            has_incoming[relation["y"]] = True
 
     for _id in dialogue["edus"]:
         edu = dialogue["edus"][_id]
@@ -47,7 +48,7 @@ def process_dialogue(dialogue):
 
     dialogue["edu_list"] = []
     for _id in dialogue["edus"]:
-        if dialogue["edus"][_id]["type"] != "paragraph":
+        if (dialogue["edus"][_id]["type"] != "paragraph") or DAIC:
             dialogue["edu_list"].append(dialogue["edus"][_id])
     dialogue["edu_list"] = sorted(dialogue["edu_list"], key=lambda edu: edu["start"])
 
@@ -58,8 +59,9 @@ def process_dialogue(dialogue):
 
     print("===")
 
-    for relation in dialogue["relations"]:
-        relation["x"] = idx[get_head(relation["x"], has_incoming, dialogue)]
-        relation["y"] = idx[get_head(relation["y"], has_incoming, dialogue)]
+    if not DAIC:
+        for relation in dialogue["relations"]:
+            relation["x"] = idx[get_head(relation["x"], has_incoming, dialogue)]
+            relation["y"] = idx[get_head(relation["y"], has_incoming, dialogue)]
 
-    return clean_dialogues(dialogue)
+    return clean_dialogues(dialogue)  # if not DAIC else dialogue

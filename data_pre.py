@@ -18,7 +18,7 @@ if __name__ == '__main__':
     dialogues = []
 
     for filename in dirs:
-        path = os.path.join(os.path.join(input_dir, filename), "../../../discourse/GOLD")
+        path = os.path.join(os.path.join(input_dir, filename), "../../discourse/GOLD")
         abspath = os.path.abspath(path)
 
         # joining files based on prefix e.g. pilot_02_01, pilot_02_02, ... will be joined
@@ -28,7 +28,14 @@ if __name__ == '__main__':
                     id = filename[:filename.find('_')]
                     dialogues.extend(pf.process_file(id, os.path.join(abspath, filename[:filename.index(".")])))
 
-    dialogues_cleaned = [pd.process_dialogue(dialogue) for dialogue in dialogues]
+            dialogues_cleaned = [pd.process_dialogue(dialogue) for dialogue in dialogues]
+        else:
+            if filename[0] != ".":
+                id = filename.split("_")[0]
+                res = pf.process_file2(id, os.path.join(input_dir, filename))
+                dialogues.append(res)
+
+            dialogues_cleaned = [pd.process_dialogue(dialogue, True) for dialogue in dialogues]
 
     with open(output_file, "w") as fout:
         fout.write(json.dumps(dialogues_cleaned))
