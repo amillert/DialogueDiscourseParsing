@@ -15,7 +15,7 @@ if __name__ == '__main__':
         else os.path.dirname(os.path.abspath(input_dir))
     )
 
-    dialogues = []
+    dialogues_cleaned = []
 
     for filename in dirs:
         path = os.path.join(os.path.join(input_dir, filename), "../../discourse/GOLD")
@@ -23,19 +23,24 @@ if __name__ == '__main__':
 
         # joining files based on prefix e.g. pilot_02_01, pilot_02_02, ... will be joined
         if os.path.exists(abspath):
-            for filename in os.listdir(abspath):
-                if re.match("\S*.ac", filename):
-                    id = filename[:filename.find('_')]
-                    dialogues.extend(pf.process_file(id, os.path.join(abspath, filename[:filename.index(".")])))
+            # for filename in os.listdir(abspath):
+            if re.match("\S*.ac", filename):
+                id = filename[:filename.find('_')]
+                res = pf.process_file(id, os.path.join(abspath, filename[:filename.index(".")]))
+                if res:
+                    dialogues_cleaned.extend([pd.process_dialogue(dialogue) for dialogue in res])
+                # dialogues.extend(pf.process_file(id, os.path.join(abspath, filename[:filename.index(".")])))
 
-            dialogues_cleaned = [pd.process_dialogue(dialogue) for dialogue in dialogues]
+            # dialogues_cleaned = [pd.process_dialogue(dialogue) for dialogue in dialogues]
         else:
             if filename[0] != ".":
                 id = filename.split("_")[0]
-                res = pf.process_file2(id, os.path.join(input_dir, filename))
-                dialogues.append(res)
+                res = [pf.process_file2(id, os.path.join(input_dir, filename))]
+                if res:
+                    dialogues_cleaned.extend([pd.process_dialogue(dialogue, True) for dialogue in res])
+                # dialogues.append(res)
 
-            dialogues_cleaned = [pd.process_dialogue(dialogue, True) for dialogue in dialogues]
+            # dialogues_cleaned = [pd.process_dialogue(dialogue, True) for dialogue in dialogues]
 
     with open(output_file, "w") as fout:
         fout.write(json.dumps(dialogues_cleaned))

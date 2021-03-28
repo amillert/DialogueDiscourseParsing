@@ -1,10 +1,11 @@
 def get_head(x, has_incoming, dialogue):
     if x in dialogue["edus"]:
         return x
-    else:
+    elif x in dialogue["cdus"]:
         for du in dialogue["cdus"][x]:
             if not du in has_incoming: return get_head(du, has_incoming, dialogue)
-        raise Warning("Can't find the recursive head")
+    # else:
+        # raise Warning(f"Can't find the recursive head in: {x}")
 
 
 def clean_dialogues(dialogue):
@@ -32,9 +33,12 @@ def clean_dialogues(dialogue):
 def process_dialogue(dialogue, DAIC=None):
     has_incoming = {}
 
-    if dialogue["relations"]:
-        for relation in dialogue["relations"]:
-            has_incoming[relation["y"]] = True
+    for relation in dialogue["relations"]:
+        has_incoming[relation["y"]] = True
+
+    # if dialogue["relations"]:
+    #     for relation in dialogue["relations"]:
+    #         has_incoming[relation["y"]] = True
 
     for _id in dialogue["edus"]:
         edu = dialogue["edus"][_id]
@@ -48,7 +52,7 @@ def process_dialogue(dialogue, DAIC=None):
 
     dialogue["edu_list"] = []
     for _id in dialogue["edus"]:
-        if (dialogue["edus"][_id]["type"] != "paragraph") or DAIC:
+        if dialogue["edus"][_id]["type"] != "paragraph" or DAIC:
             dialogue["edu_list"].append(dialogue["edus"][_id])
     dialogue["edu_list"] = sorted(dialogue["edu_list"], key=lambda edu: edu["start"])
 

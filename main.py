@@ -35,8 +35,8 @@ tf.flags.DEFINE_integer('num_layers', 1, 'number of RNN layers in encoders')
 tf.flags.DEFINE_integer('num_relations', 16, 'number of relation types')
 tf.flags.DEFINE_integer('batch_size', 4, 'batch size')
 tf.flags.DEFINE_float('keep_prob', 0.5, 'probability to keep units in dropout')
-tf.flags.DEFINE_float('learning_rate', 0.1, 'learning rate')
-tf.flags.DEFINE_float('learning_rate_decay', 0.98, 'learning rate decay factor')
+tf.flags.DEFINE_float('learning_rate', 1.8, 'learning rate')
+tf.flags.DEFINE_float('learning_rate_decay', 0.85, 'learning rate decay factor')
 
 
 def get_summary_sum(s, length):
@@ -49,8 +49,10 @@ def get_summary_sum(s, length):
 
 
 map_relations = {}
-data_train = load_data('outputs/res3.json', map_relations)
-data_test = load_data('outputs/res3.json', map_relations)
+data_train = load_data('outputs/res_DAIC.json', map_relations)
+data_test = load_data('outputs/res_DAIC.json', map_relations)
+# data_train = load_data('outputs/res3.json', map_relations)
+# data_test = load_data('outputs/res3.json', map_relations)
 vocab, embed = build_vocab(data_train)
 
 print('Dataset sizes: %d/%d' % (len(data_train), len(data_test)))
@@ -62,6 +64,13 @@ config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
 if __name__ == '__main__':
+    # TODO(albert): 1. pretrain model best on STAC
+    # DING (french corpus data)
+    # TODO(albert): 2. predict on DAIC (transfer learning on pretrained)
+    # TODO(albert): 3. predict on french data
+    # TODO(albert): 3.1 what embeddings would be best for the task (try BERT - multilingual)
+    # TODO(albert): 4. compare 2. and 3.
+
     with sess.as_default():
         model = Model(sess, FLAGS, embed)  # , data_train)
 
