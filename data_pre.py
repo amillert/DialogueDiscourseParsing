@@ -27,8 +27,8 @@ if __name__ == '__main__':
             if re.match("\S*.ac", filename):
                 id = filename[:filename.find('_')]
                 res = pf.process_file(id, os.path.join(abspath, filename[:filename.index(".")]))
-                if res:
-                    dialogues_cleaned.extend([pd.process_dialogue(dialogue) for dialogue in res])
+                # if res:
+                dialogues_cleaned.extend([pd.process_dialogue(dialogue) for dialogue in res])
                 # dialogues.extend(pf.process_file(id, os.path.join(abspath, filename[:filename.index(".")])))
 
             # dialogues_cleaned = [pd.process_dialogue(dialogue) for dialogue in dialogues]
@@ -36,8 +36,8 @@ if __name__ == '__main__':
             if filename[0] != ".":
                 id = filename.split("_")[0]
                 res = [pf.process_file2(id, os.path.join(input_dir, filename))]
-                if res:
-                    dialogues_cleaned.extend([pd.process_dialogue(dialogue, True) for dialogue in res])
+                # if res:
+                dialogues_cleaned.extend([pd.process_dialogue(dialogue, True) for dialogue in res])
                 # dialogues.append(res)
 
             # dialogues_cleaned = [pd.process_dialogue(dialogue, True) for dialogue in dialogues]

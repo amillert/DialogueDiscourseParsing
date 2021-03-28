@@ -156,10 +156,11 @@ def process_file(identifier, filename_prefix):
         "relations": [],
     } for x in pre_buf}
 
+    # check those extracts
     edus = {x["@id"]: {
         "id": x["@id"],
         "type": xml_extract.extract_type(x),
-        "text": discourse[xml_extract.extract_start(x):xml_extract.extract_end(x)],
+        "text": discourse[xml_extract.extract_start(x)-1:xml_extract.extract_end(x)-1].strip(),
         "start": xml_extract.extract_start(x),
         "end": xml_extract.extract_end(x),
     } for x in pre_edu}
